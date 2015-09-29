@@ -1,0 +1,52 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{fullpage}
+\usepackage[spanish]{babel}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float} % para que los gr\'aficos se queden en su lugar con [H]
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{amsmath} %para escribir funci\'on partida
+\usepackage{hyperref} % para inlcuir links dentro del texto
+\usepackage{tabu} 
+\usepackage{listings} % para agregar código de cualquier lenguaje
+
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+
+\lstset{language=C++,
+%numbers=left,
+%numberstyle=\footnotesize,      %
+                basicstyle=\ttfamily,
+                keywordstyle=\color{blue}\ttfamily,
+                stringstyle=\color{red}\ttfamily,
+                commentstyle=\color{mygray}\ttfamily,
+                morecomment=[l][\color{magenta}]{\#}
+}
+
+
+\title{Trabajo Pr\'ctico 1 \\ \small{Sistemas Complejos en Maquinas Paralelas}  }
+\author{}
+
+<<echo=F>>=
+require(grDevices)
+require(fields) # para label color 
+library(plot3D) # extensión de persp 
+library(misc3d)
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\label{indice}
+\tableofcontents 
+
+\end{document}
+
