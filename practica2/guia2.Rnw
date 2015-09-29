@@ -1,0 +1,190 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{fullpage}
+\usepackage[spanish]{babel}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float} % para que los gr\'aficos se queden en su lugar con [H]
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{amsmath} %para escribir funci\'on partida
+\usepackage{hyperref} % para inlcuir links dentro del texto
+\usepackage{tabu} 
+\usepackage{listings} % para agregar código de cualquier lenguaje
+
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+
+\lstset{language=C++,
+%numbers=left,
+%numberstyle=\footnotesize,      %
+                basicstyle=\ttfamily,
+                keywordstyle=\color{blue}\ttfamily,
+                stringstyle=\color{red}\ttfamily,
+                commentstyle=\color{mygray}\ttfamily,
+                morecomment=[l][\color{magenta}]{\#}
+}
+
+
+\title{Guia 2. M\'etodos iterativos \\ \small{Sistemas Complejos en Maquinas Paralelas}  }
+\author{Landfried, Gustavo}
+
+<<echo=F>>=
+require(grDevices)
+require(fields) # para label color 
+library(plot3D) # extensión de persp 
+library(misc3d)
+
+#wd <- getwd()
+#setwd("/home/glandfried/Documentos/materias/SistemasComplejosMaquinasParalelas/practica2")
+
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\label{indice}
+\tableofcontents 
+
+\section{Primera parte}
+
+\subsection{Ejercicio 1}
+
+Los errores, o la diferencia máxima entre iteraciones, en funci\'on del tiempo aproximando con Jacobi hasta $0.001$,
+
+<<echo=F, eval=T>>=
+
+erroresJacobi <- read.csv("datos/ejercicio1Errores.csv", header =F)
+
+png("Imagenes/ejercicio1.png")
+plot(seq(nrow(erroresJacobi)),erroresJacobi[,1], type="l", xlab="iteracion", ylab="Diferencia máxima entre iteraciones")
+graphics.off()
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicio1}
+        \end{subfigure}
+\end{figure}
+
+\subsection{Ejercicio 2}
+
+Los errores, o la diferencia máxima entre iteraciones, en funci\'on del tiempo aproximando por Gauss-Seidel hasta $0.001$,
+
+<<echo=F, eval=T>>=
+
+errores <- read.csv("datos/ejercicio2Errores.csv", header =F)
+
+png("Imagenes/ejercicio2.png")
+plot(seq(nrow(errores)),errores[,1], type="l", xlab="iteracion", ylab="Diferencia máxima entre iteraciones")
+graphics.off()
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicio2}
+        \end{subfigure}
+\end{figure}
+
+\subsection{Ejercicio 4}
+
+
+
+
+
+\section{Segunda Parte}
+
+\subsection{Disipador}
+
+
+<<echo=F, eval=T>>=
+
+disipador <- as.matrix(read.csv("datos/ejercicioDisipador.csv", header =F))
+
+png("Imagenes/ejercicioDisipador.png")
+image(seq(nrow(disipador)),seq(ncol(disipador)),-disipador, ylab="j", xlab="i")
+graphics.off()
+@
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicioDisipador}
+        \end{subfigure}
+\end{figure}
+
+\subsection{Cilindros}
+
+
+<<echo=F, eval=T>>=
+
+concentracion <- as.matrix(read.csv("datos/ejercicioCilindros.csv", header =F))
+
+tiempo <- seq(nrow(concentracion))
+espacio <- seq(ncol(concentracion))
+
+
+zfacet <- concentracion[-1, -1] + concentracion[-1, -max(espacio)] + concentracion[-max(tiempo), -1] + concentracion[-max(tiempo), -max(espacio)]
+nbcol = 1000
+color = rev(rainbow(nbcol, start = 0/6, end = 4/6))
+facetcol <- cut(zfacet, nbcol)
+
+png("Imagenes/ejercicioCilindro.png")
+persp(tiempo,espacio,concentracion, theta =270, phi =36,  ticktype= "detailed", nticks=3, col = color[facetcol],border=NA)
+graphics.off()
+
+png("Imagenes/ejercicioCilindroEspacioLineas.png")
+res<-persp(tiempo,espacio,concentracion, theta =270, phi =0, border=NA)
+for (i in seq(1,max(tiempo),by=10) ){
+  lines(trans3d( x=i,espacio, concentracion[i,], pmat = res))
+}
+graphics.off()
+
+png("Imagenes/ejercicioCilindroTiempoLineas.png")
+res<-persp(tiempo,espacio,concentracion, theta =0, phi =0, border=NA)
+for (i in seq(1,max(tiempo),by=10) ){
+  lines(trans3d( x=i,espacio, concentracion[i,], pmat = res))
+}
+graphics.off()
+
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.6\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicioCilindro}
+        \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicioCilindroEspacioLineas}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicioCilindroTiempoLineas}
+        \end{subfigure}
+\end{figure}
+
+
+\section{Anexo}
+
+
+\subsection{Ejercicio 1}
+
+\lstinputlisting[language=C++]{cpp/ejercicio1.cpp}
+
+
+\end{document}
+

@@ -1,0 +1,395 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{fullpage}
+\usepackage[spanish]{babel}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float} % para que los gr\'aficos se queden en su lugar con [H]
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{amsmath} %para escribir funci\'on partida
+\usepackage{hyperref} % para inlcuir links dentro del texto
+\usepackage{tabu} 
+
+\title{Guia 1 \\ \small{Sistemas Complejos en Maquinas Paralelas}  }
+\author{Landfried, Gustavo}
+
+<<echo=F>>=
+require(grDevices)
+require(fields) # para label color 
+library(plot3D) # extensión de persp 
+library(misc3d)
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\label{indice}
+\tableofcontents 
+
+\section{Ejercicio 1}
+
+
+<<label=Ej1-gauss3d, echo=F, eval=F>>=
+x0=0; y0=0; a=0.5; b=0; c=0.125; minY=-5; maxY=5; minX=-5; maxX=5; N=100; 
+
+
+require(fields)
+X <- seq(-5,5, by=0.1)
+Y <- seq(-5,5, by=0.1)
+
+for (k in 1:5){
+f <- function (X , Y)  k*exp( - (a*(X-x0)^2 + 2*b*(X-x0)*(Y-y0) + c*(Y-y0)^2))
+Z = outer(X ,Y, f)     
+
+
+nrz <- nrow(Z)
+ncz <- ncol(Z)
+# Compute the z-value at the facet centres
+zfacet <- Z[-1, -1] + Z[-1, -ncz] + Z[-nrz, -1] + Z[-nrz, -ncz]
+nbcol = 1000
+color = rev(rainbow(nbcol, start = (5-max(Z))/6, end = 5/6))
+facetcol <- cut(zfacet, nbcol)
+
+nombreImagen <- paste0(paste0('Imagenes/Ej1_Imagen', toString(k)), '.png')
+png(filename=nombreImagen)
+res<-persp(X,Y,Z, theta =-36 , phi =36, zlim=c(-0,5), main="Guassian 2D",  ticktype= "detailed", nticks=3, cex.lab=0.75, cex.axis=0.75, adj=0, col.main=rgb(0,0,0,0.5), font.main=1,col = color[facetcol],border=NA)
+image.plot(legend.only=T, zlim=c(0,max(Z)), col=color)
+lineas <-contourLines(X, X, Z,  levels = c(1, 2, 3, 4,5 ))
+lines(trans3d(lineas[[1]]$x, lineas[[1]]$y , z=5, pmat = res))
+if (k > 1) lines(trans3d(lineas[[2]]$x, lineas[[2]]$y , z=5, pmat = res))
+if (k > 2) lines(trans3d(lineas[[3]]$x, lineas[[3]]$y , z=5, pmat = res))
+if (k > 3) lines(trans3d(lineas[[4]]$x, lineas[[4]]$y , z=5, pmat = res))
+if (k > 4) lines(trans3d(lineas[[5]]$x, lineas[[5]]$y , z=5, pmat = res))
+graphics.off()
+
+
+nombreImagen <- paste0(paste0('Imagenes/Ej1_ImagenContour', toString(k)), '.png')
+png(filename=nombreImagen)
+image(X,Y,Z, main="Guassian 2D",  col= rev(rainbow(nbcol, start = (5-max(Z))/6, end = 5/6) ))
+image.plot(legend.only=T, zlim=c(0,max(Z)), col=color)
+contour(X, X, Z,  levels = c(1, 2, 3, 4,5 ), labcex = 1, lwd=2,  add=T)
+graphics.off()
+}
+
+
+@
+
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_Imagen1}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_Imagen2}
+        \end{subfigure}%
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_Imagen3}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_Imagen4}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_Imagen5}
+        \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_ImagenContour1}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_ImagenContour2}
+        \end{subfigure}%
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_ImagenContour3}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_ImagenContour4}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej1_ImagenContour5}
+        \end{subfigure}
+\end{figure}
+
+
+\section{Ejercicio 2}
+
+
+<<>>=
+f <- function (X , Y) X*exp(-(X^2)-(Y^2))
+df_dy <- function(X,Y) (f(X,Y+h)-f(X,Y-h))/(2*h)
+df_dx <- function(X,Y) (f(X+h,Y)-f(X-h,Y))/(2*h)
+@
+
+
+<<label= Ej2_vectores2D, echo=F, eval=F >>=
+
+h<-0.1
+X <- seq(-2,2, by=h)
+Y <- seq(-2,2, by=h)
+
+f <- function (X , Y) X*exp(-(X^2)-(Y^2))
+Z = outer(X ,Y, f)
+
+
+png('Imagenes/Ej2_persp.png')
+persp(X,Y,Z, theta=-25, phi=20, ticktype="detailed")
+graphics.off()
+
+df_dy <- function(X,Y) (f(X,Y+h)-f(X,Y-h))/(2*h)
+df_dx <- function(X,Y) (f(X+h,Y)-f(X-h,Y))/(2*h)
+
+XY <- expand.grid(X,Y)
+
+png('Imagenes/Ej2_arrows.png',width = 480*1.5, height = 480)
+plot(0,0,xlim=c(-2,2), ylim=c(-2,2), type="n")
+arrows(XY[,1], XY[,2], XY[,1]+(df_dx(XY[,1],XY[,2])/2) ,XY[,2]+(df_dy(XY[,1],XY[,2])/2),angle = 10, length=.12)
+contour(X, Y, Z,  levels = seq(min(Z), max(Z), length=7), labcex = 1, lwd=2,  add=T, lab.col="black" )
+graphics.off()
+
+@
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej2_arrows}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej2_persp}
+        \end{subfigure}
+\end{figure}
+
+\section{Ejercicio 3}
+
+Wolfram
+
+\begin{equation}
+2x(2x^2 - 3)e^{-x^2-y^2}
+\end{equation}
+
+<<echo=F,eval=F>>=
+wolfram <- function(X,Y) 2*X*((2*(X^2))-3)*(exp(-(X^2)-(Y^2)))
+
+h<-0.1
+X1 <- seq(-2,2, by=h)
+Y1 <- seq(-2,2, by=h)
+Z1 = outer(X, Y, wolfram)
+
+png('Imagenes/Ej3_Laplaciano_persp_wolfram.png')
+persp(X1,Y1,Z1, ticktype = "detailed")
+graphics.off()
+
+@
+
+
+<<>>=
+df2_dy2 <- function(X,Y) (f(X,Y+h) - 2*f(X,Y) + f(X,Y-h))/(h^2)
+df2_dx2 <- function(X,Y) (f(X+h,Y) - 2*f(X,Y) + f(X-h,Y))/(h^2)
+laplac_f<-  function(X,Y) df2_dx2(X,Y) + df2_dy2(X,Y) 
+@
+
+<<label=Ej3_laplaceiano,echo=F,eval=F>>=
+
+h<-0.1
+X <- seq(-2,2, by=h)
+Y <- seq(-2,2, by=h)
+f <- function (X , Y) X*exp(-(X^2)-(Y^2))
+df2_dy2 <- function(X,Y) (f(X,Y+h) - 2*f(X,Y) + f(X,Y-h))/(h^2)
+df2_dx2 <- function(X,Y) (f(X+h,Y) - 2*f(X,Y) + f(X-h,Y))/(h^2)
+laplac_f<-  function(X,Y) df2_dx2(X,Y) + df2_dy2(X,Y) 
+
+Z = outer(X ,Y, laplac_f)
+png('Imagenes/Ej3_Laplaciano_persp.png')
+persp(X,Y,Z, ticktype = "detailed")
+graphics.off()
+
+Z3<- Z-Z1
+
+png('Imagenes/Ej3_aproximado_menos_exacto.png')
+persp(X,Y,Z3,  ticktype = "detailed", zlim=c(min(min(Z1),min(Z)),max(max(Z1),max(Z)) ) )
+graphics.off()
+
+@
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej3_Laplaciano_persp}
+        \caption{$\bigtriangledown^2u$ aproximado}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej3_Laplaciano_persp_wolfram}
+        \caption{$\bigtriangledown^2u$ exacto}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej3_aproximado_menos_exacto}
+        \caption{aproximado - exacto}
+        \end{subfigure}
+\end{figure}
+
+
+
+\section{Ejercicio 4}
+
+<<>>=
+
+hx <- 0.1; hy<- 0.1; hz<-0.1
+h<-c(hx,hy,hz)
+
+u <- function (x,y,z) c(-y,-x,0)/( ((x^2)+(y^2))^(3/2) )
+
+dux_dz <- function(X,Y,Z) (u(X,Y,Z+hz)[1]-u(X,Y,Z-hz)[1])/(2*hz)
+dux_dy <- function(X,Y,Z) (u(X,Y+hy,Z)[1]-u(X,Y-hy,Z)[1])/(2*hy)
+dux_dx <- function(X,Y,Z) (u(X+hx,Y,Z)[1]-u(X-hx,Y,Z)[1])/(2*hx)
+
+duy_dz <- function(X,Y,Z) (u(X,Y,Z+hz)[2]-u(X,Y,Z-hz)[2])/(2*hz)
+duy_dy <- function(X,Y,Z) (u(X,Y+hy,Z)[2]-u(X,Y-hy,Z)[2])/(2*hy)
+duy_dx <- function(X,Y,Z) (u(X+hx,Y,Z)[2]-u(X-hx,Y,Z)[2])/(2*hx)
+
+duz_dz <- function(X,Y,Z) (u(X,Y,Z+hz)[3]-u(X,Y,Z-hz)[3])/(2*hz)
+duz_dy <- function(X,Y,Z) (u(X,Y+hy,Z)[3]-u(X,Y-hy,Z)[3])/(2*hy)
+duz_dx <- function(X,Y,Z) (u(X+hx,Y,Z)[3]-u(X-hx,Y,Z)[3])/(2*hx)
+
+
+DeltaXu<-function(X,Y,Z) c( dux_dy(X,Y,Z)-duy_dz(X,Y,Z), dux_dz(X,Y,Z)-duz_dx(X,Y,Z), duy_dx(X,Y,Z)-dux_dy(X,Y,Z) )
+                     
+@
+
+
+<<label=Ej4, echo=F, eval=F>>=
+X1<-seq(-2,2,by=0.5); Y1<-X; Z1<-X; 
+XYZ <- expand.grid(X1,Y1,Z1); 
+X<-as.matrix(XYZ[,1]); Y<-as.matrix(XYZ[,2]); Z<-as.matrix(XYZ[,3])
+
+RotorX<-matrix(NA, ncol=1,nrow=0)
+RotorY<-matrix(NA, ncol=1,nrow=0)
+RotorZ<-matrix(NA, ncol=1,nrow=0)
+for (i in 1:dim(XYZ)[1]){
+  res <- DeltaXu(X[i],Y[i],Z[i])
+  RotorX<-rbind(RotorX,res[1])
+  RotorY<-rbind(RotorY,res[2])
+  RotorZ<-rbind(RotorZ,res[3])
+}
+
+sinNa<-(!is.na(RotorX))&(!is.na(RotorY))&(!is.na(RotorZ))
+
+png('Imagenes/Ej4_Rotor_XZ.png')
+arrows3D(x0=X[sinNa],y0=Y[sinNa],z0=Z[sinNa], x1=(X+(RotorX/20))[sinNa],y1=(Y+(RotorY/20))[sinNa],z1=(Z+(RotorZ/20))[sinNa], theta=0,phi=0, lwd = 2, d = 2, length = 0.1,ticktype="detailed", expand=1, angle=10)
+graphics.off()
+
+png('Imagenes/Ej4_Rotor_YZ.png')
+arrows3D(x0=X[sinNa],y0=Y[sinNa],z0=Z[sinNa], x1=(X+(RotorX/20))[sinNa],y1=(Y+(RotorY/20))[sinNa],z1=(Z+(RotorZ/20))[sinNa], theta=90,phi=0, lwd = 2, d = 2, length = 0.1,ticktype="detailed", expand=1, angle=10)
+graphics.off()
+
+png('Imagenes/Ej4_Rotor_XY.png')
+arrows3D(x0=X[sinNa],y0=Y[sinNa],z0=Z[sinNa], x1=(X+(RotorX/20))[sinNa],y1=(Y+(RotorY/20))[sinNa],z1=(Z+(RotorZ/20))[sinNa], theta=0,phi=270, lwd = 2, d = 2, length = 0.1,ticktype="detailed", expand=1, angle=10)
+graphics.off()
+
+png('Imagenes/Ej4_Rotor.png', width = 480*2, height = 480*2)
+arrows3D(x0=X[sinNa],y0=Y[sinNa],z0=Z[sinNa], x1=(X+(RotorX/20))[sinNa],y1=(Y+(RotorY/20))[sinNa],z1=(Z+(RotorZ/20))[sinNa], theta=0,phi=10, lwd = 4, d = 2, length = 0.2,ticktype="detailed", expand=1, angle=20)
+graphics.off()
+
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_Rotor_XZ}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_Rotor_YZ}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_Rotor_XY}
+        \end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.6\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_Rotor}
+        \end{subfigure}
+\end{figure}
+
+
+
+<<echo=F, eval=F>>=
+
+X1<-seq(-2,2,by=0.5); Y1<-X1; Z1<-X1; 
+XYZ <- expand.grid(X1,Y1,Z1); 
+X<-as.matrix(XYZ[,1]); Y<-as.matrix(XYZ[,2]); Z<-as.matrix(XYZ[,3])
+
+RotorX<-matrix(NA, ncol=1,nrow=0)
+RotorY<-matrix(NA, ncol=1,nrow=0)
+RotorZ<-matrix(NA, ncol=1,nrow=0)
+for (i in 1:dim(XYZ)[1]){
+  res <- DeltaXu(X[i],Y[i],Z[i])
+  RotorX<-rbind(RotorX,res[1])
+  RotorY<-rbind(RotorY,res[2])
+  RotorZ<-rbind(RotorZ,res[3])
+}
+
+sinNa<-(!is.na(RotorX))&(!is.na(RotorY))&(!is.na(RotorZ))
+
+normaEuc <- function(x,y,z,x1,y1,z1) sqrt( (x+(x+x1))^2 + (y+(y+y1))^2 + (z+(z+z1))^2)
+
+Z2 <- normaEuc(X[sinNa],Y[sinNa],Z[sinNa], RotorX[sinNa], RotorY[sinNa], RotorZ[sinNa])
+levels(X[sinNa])
+
+X<-X[sinNa];Y<-Y[sinNa];Z<-Z[sinNa]; 
+
+
+png('Imagenes/Ej4_normas.png')
+points3D(X,Y,Z, colvar = Z2, theta=15, phi=45,pch=20, zlim=c(-2,2), ticktype= "detailed" )
+graphics.off()
+
+png('Imagenes/Ej4_normasMenor5.png')
+points3D(X[Z2<5],Y[Z2<5],Z[Z2<5], colvar = Z2[Z2<5], theta=20, phi=15,pch=20, zlim=c(-2,2),xlim=c(-2,2),ylim=c(-2,2), ticktype= "detailed" )
+graphics.off()
+
+png('Imagenes/Ej4_normasEntre6y5.png')
+points3D(X[6>Z2& Z2>5],Y[6>Z2 & Z2>5],Z[6>Z2 & Z2>5], colvar = Z2[6>Z2 & Z2>5], theta=20, phi=15,pch=20, zlim=c(-2,2),xlim=c(-2,2),ylim=c(-2,2) , ticktype= "detailed" )
+graphics.off()
+
+png('Imagenes/Ej4_normasMayor20.png')
+points3D(X[Z2>20],Y[Z2>20],Z[Z2>20], colvar = Z2[Z2>20], theta=20, phi=15,pch=20, zlim=c(-2,2),xlim=c(-2,2),ylim=c(-2,2) , ticktype= "detailed" )
+graphics.off()
+
+##points3D(X[20>Z2& Z2>10],Y[20>Z2 & Z2>10],Z[20>Z2 & Z2>10], colvar = Z2[20>Z2 & Z2>10], theta=20, phi=15,pch=20, zlim=c(-2,2),xlim=c(-2,2),ylim=c(-2,2) , ticktype= "detailed" )
+
+
+
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_normas}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_normasMenor5}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_normasMayor20}
+        \end{subfigure}
+          \begin{subfigure}[b]{0.3\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/Ej4_normasEntre6y5}
+        \end{subfigure}
+\end{figure}
+
+
+\end{document}
+

@@ -1,0 +1,144 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{fullpage}
+\usepackage[spanish]{babel}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float} % para que los gr\'aficos se queden en su lugar con [H]
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{amsmath} %para escribir funci\'on partida
+\usepackage{hyperref} % para inlcuir links dentro del texto
+\usepackage{tabu} 
+
+\title{Dispipaci\'on Calor \\ \small{Sistemas Complejos y Maquinas Paralelas}  }
+\author{Landfried, Gustavo}
+
+<<echo=F>>=
+require(grDevices)
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\label{indice}
+\tableofcontents 
+
+\section{Problema}
+
+Estudiar el enfriamiento en el espacio y en el tiempo de una barra de metal que fue calentada en su punto medio y que se encuentra sumergida en sus extremidades en liquidos 0 grados.
+
+\section{Modelo f\'isico}
+
+\begin{itemize}
+  \item Reducimos la dimensi\'on espacial a una \'unica dimensi\'on. 
+  \item El coeficiente de difusi\'on t\'ermica no var\'ia
+  \item Ley de Fourier
+  \item La barra no se dilata ni se contrae
+  \item ...
+\end{itemize}
+
+\section{Modelo matem\'atico}
+
+\paragraph{Funci\'on de disipaci\'on de calor}
+
+\begin{equation}
+u(x,t) = e^{-2\pi^2 t }sen(\pi x)
+\end{equation}
+
+\paragraph{Domino}
+
+\begin{equation}
+x \in [ 0,1] \ \ \  0 < t < \infty 
+\end{equation}
+
+\paragraph{Condiciones suplementarias}
+
+\begin{equation}
+u(x,0) = sen(\pi x)
+\end{equation}
+
+\begin{equation}
+u(0,t) = u(1,t) = 0
+\end{equation}
+
+\section{Modelo discreto}
+
+\begin{equation}
+u(i,t+1) = (1-2r)u(i,t)+r(u(i-1,t)+u(i+1,t))
+\end{equation}
+
+con $r=\frac{kD}{h^2}$
+
+\section{Implementacion}
+<< echo=F,eval=F>>=
+h <- 0.01
+tMax<-5
+r=0.4
+
+u <- function(x,y) exp(-2*(pi^2)*y) * sin(pi*x) 
+
+length(X)/2
+
+X<-seq(0,1,length.out=101)
+@
+
+<< eval=F>>=
+Z <- matrix(NA, ncol=101, nrow=0)
+Z<- rbind(Z,u(X,0))
+Z[1]<-0; Z[101] <- 0
+t<-1
+i<-2
+while ( Z[t,(dim(Z)[2]/2)+1] > 0.1){
+  Z <- rbind(Z,rep(0,101))
+  while( dim(Z)[2] > i) {
+    Z[t+1,i] <- ((1-(2*r))*Z[t,i]) + (r*(Z[t,i-1]+Z[t,i+1]))
+    i <- i +1    
+  }
+  i<-2
+  t<-t+1
+}
+@
+
+
+<<echo=F,eval=F>>=
+dim(Z)
+Ti<-seq(1,t,by=1)
+length(Ti)
+length(X)
+persp(Ti, X,Z)
+
+nrz <- nrow(Z)
+ncz <- ncol(Z)
+# Compute the z-value at the facet centres
+zfacet <- Z[-1, -1] + Z[-1, -ncz] + Z[-nrz, -1] + Z[-nrz, -ncz]
+nbcol = 1000
+color = rev(rainbow(nbcol, start = 0/6, end = 5/6))
+facetcol <- cut(zfacet, nbcol)
+
+png(filename="Imagenes/r04.png")
+persp(Ti,X,Z, theta=36,phi=36,col = color[facetcol],border=NA,  ticktype= "detailed", nticks=3)
+image.plot(legend.only=T, zlim=c(0,max(Z)), col=color)
+dev.off()
+
+@
+
+
+\section{Graficaci\'on}
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.8\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/r04.png}
+        \end{subfigure}
+\end{figure}
+
+
+\end{document}

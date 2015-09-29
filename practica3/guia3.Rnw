@@ -1,0 +1,249 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{fullpage}
+\usepackage[spanish]{babel}
+\usepackage{cite}
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float} % para que los gr\'aficos se queden en su lugar con [H]
+\usepackage{subcaption}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{amsmath} %para escribir funci\'on partida
+\usepackage{hyperref} % para inlcuir links dentro del texto
+\usepackage{tabu} 
+\usepackage{listings} % para agregar código de cualquier lenguaje
+\usepackage{animate} % para hacer videos con vectores de imagenes % no funcionó
+\usepackage{multimedia}
+
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+
+\lstset{language=C++,
+%numbers=left,
+%numberstyle=\footnotesize,      %
+basicstyle=\ttfamily,
+keywordstyle=\color{blue}\ttfamily,
+stringstyle=\color{red}\ttfamily,
+commentstyle=\color{mygray}\ttfamily,
+morecomment=[l][\color{magenta}]{\#}
+}
+
+
+\title{Guia 3.\\ \small{Sistemas Complejos en Maquinas Paralelas}  }
+\author{Landfried, Gustavo}
+
+<<echo=F>>=
+library(grDevices) # para imprimir graficos con R
+require(fields) # para label color 
+library(plot3D) # extensión de persp 
+library(misc3d)
+
+wd <- getwd()
+setwd(wd)
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+
+\label{indice}
+\tableofcontents 
+
+\section{Parte 1}
+
+\subsection{Ejercicio 1. La ecuaci\'on de onda}
+
+\begin{equation}
+\frac{\partial^2 u}{\partial t^2} = \frac{T}{\mu} \frac{\partial^2 u}{\partial x^2} 
+\end{equation}
+
+Con $T$ tensi\'on (Kgf) y $\mu$ densidad lineal (Kg/m). La E.D.D.P es hiperb\'olica. 
+
+\begin{equation}
+\frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{k^2} =  \frac{T}{\mu} \Big{(} (\omega)\frac{u_{i+1,j+1} - 2u_{i,j+1} + u_{i-1,j+1}}{h^2} + (1-\omega)\frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{h^2} \Big{)}
+\end{equation}
+
+\paragraph{M\'etodo expl\'icito} $\omega = 0$
+
+\begin{equation}
+u_{i,j+1}  = \frac{k^2}{h^2} \frac{T}{\mu} ( u_{i+1,j} - 2u_{i,j} + u_{i-1,j} ) + 2u_{i,j} - u_{i,j-1}
+\end{equation}
+
+\begin{equation}
+u_{i,j+1}  = \frac{k^2}{h^2} \frac{T}{\mu} ( u_{i+1,j} + u_{i-1,j} ) - u_{i,j-1} + 2(1-\frac{k^2}{h^2} \frac{T}{\mu})u_{i,j} 
+\end{equation}
+
+Con $\frac{k^2}{h^2} \frac{T}{\mu}=1$, vale que
+
+\begin{equation}
+u_{i,j+1}  =  u_{i+1,j} + u_{i-1,j} - u_{i,j-1}
+\end{equation}
+
+\paragraph{M\'etodo Crack-Nicolson}$\omega = 0.5$
+
+
+\begin{equation}
+\frac{u_{i,j+1} - 2u_{i,j} + u_{i,j-1}}{k^2} =  \frac{T}{\mu} \Big{(} \frac{u_{i+1,j+1} - 2u_{i,j+1} + u_{i-1,j+1}}{2h^2} + \frac{u_{i+1,j} - 2u_{i,j} + u_{i-1,j}}{2h^2} \Big{)}
+\end{equation}
+
+
+\begin{equation}
+u_{i,j+1} - 2u_{i,j} + u_{i,j-1} =  \frac{Tk^2}{\mu 2h^2} \Big{(}  u_{i+1,j+1} - 2u_{i,j+1} + u_{i-1,j+1} + u_{i+1,j} - 2u_{i,j} + u_{i-1,j} \Big{)}
+\end{equation}
+
+
+Necesitamos dos tiempos de condiciones iniciales. Una forma de definir esto es dando una condici\'on de Newman, que impone una condici\'on sobre la derivada. 
+
+\begin{equation}
+\frac{\partial u}{\partial t} |_{t=0}^{x=x} \simeq \frac{u_i^1-u_i^{-1}}{2k}
+\end{equation}
+
+\begin{equation}
+u_i^{-1} = u_i^1 - 2g(x)k
+\end{equation}
+
+Luego, sabiendo el valor de la derivada sabemos el valor en la siguiente posici\'on. 
+
+\begin{equation}
+u_i^1 = \frac{u_{i+1}^0 - u_{i-1}^0}{2}+g(x)k
+\end{equation}
+
+Ahora, dado un valor para la dervada g(x) tenemos un valor en el tiempo $1$. Lo que nos permite calcular la sucesi\'on. 
+
+Veamos cuando ocurre $\frac{k^2}{h^2} \frac{T}{\mu}=1$. 
+
+\begin{equation}
+\frac{ 40 \cdot 9,80665 m^2/s^2 }{\mu}=\frac{h m^2}{k s^2}. 
+\end{equation}
+
+Luego, si $k = 100000$ entonces $h \simeq 0,0392$. En 255 partes aproximadamente.   
+
+<<echo=F, eval=F>>=
+cuerda<-as.matrix(read.csv("Datos/ejercicioCuerda.csv", header =F))
+tiempo <- seq(nrow(cuerda[1:60,]))
+espacio <- seq(ncol(cuerda[1:60,]))
+
+png("Imagenes/ejercicioCuerdas1.png")
+res<-persp(tiempo, espacio, cuerda[1:60,], phi=5, theta=20,border=NA)
+for (i in seq(1,60,by=1) ){
+  lines(trans3d( x=i,espacio, cuerda[i,], pmat = res))
+}
+graphics.off()
+
+@
+
+
+\begin{figure}[H]
+        \centering
+        \begin{subfigure}[b]{0.6\textwidth}
+                \includegraphics[width=\textwidth]{Imagenes/ejercicioCuerdas1}
+        \end{subfigure}
+\end{figure}
+
+<<echo=F, eval=F>>=
+
+cuerda<-as.matrix(read.csv("Datos/ejercicioCuerda.csv", header =F))
+tiempo <- seq(nrow(cuerda))
+espacio <- seq(ncol(cuerda))
+
+i<-2
+while ( cuerda[i,16] < 0.07   ){
+  png(paste0(paste0("Imagenes/img-0",i), ".png"))
+  plot( espacio/31,cuerda[i,], type= "l", ylab="altura", xlab="espacio", ylim=c(-0.07,0.07)) 
+  graphics.off()
+  i<-i+1
+}
+i<-1
+  png(paste0(paste0("Imagenes/img-0",i), ".png"))
+  plot( espacio/31,cuerda[i,], type= "l", ylab="altura", xlab="espacio", ylim=c(-0.07,0.07)) 
+  graphics.off()
+
+@
+
+\paragraph{a}
+
+Sabiendo que la velocidad de propagaci\'on es 
+
+\begin{equation}
+v = \sqrt{\frac{T}{\mu}}
+\end{equation}
+
+y que $T=40kg \time 9,80665 m/s^2 $ y que $\mu = 1g/1m$
+
+\begin{equation}
+v = \sqrt{40000 \cdot 9,80665} \cdot m/s \simeq 626 m/s
+\end{equation}
+
+\paragraph{b}
+
+Un ciclo de onda se realiza en $s/313$
+
+\paragraph{c}
+
+$f = 313/s = v/2L$
+
+
+\subsection{Ejercicio 2. Ecuaci\'on de Burgers}
+
+Con una dimensi\'on espacial $x \in [ -0.5;0.5 ]$ y tiempo $t>0$, $u(x,t)$ es la velocidad del fluido dependiendo del espacio y el tiempo. 
+
+\begin{equation}
+ \frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} =  v\frac{\partial^2}{\partial x^2}
+\end{equation}
+
+Esta es una equaci\'on en diferencias parciales (EDDP) parab\'olica. 
+
+\begin{equation}
+\frac{u_{i,j+1} - u_{i,j-1}}{2k} + u \frac{u_{i+1,j} - u_{i-1,j}}{2h} = v\frac{u_{i+1,j}-2u_{i,j}+u_{i-1,j}}{h^2}
+\end{equation}
+
+Supongamos que $h = k$. Luego, 
+
+
+\begin{equation}
+\frac{u_{i,j+1} - u_{i,j-1} +  u(u_{i+1,j} - u_{i-1,j}) }{2h} = v\frac{u_{i+1,j}-2u_{i,j}+u_{i-1,j}}{h^2}
+\end{equation}
+
+
+\begin{equation}
+u_{i,j+1}  = \frac{2v}{h}(u_{i+1,j}-2u_{i,j}+u_{i-1,j}) + u_{i,j-1} -  u_{i,j}(u_{i+1,j} - u_{i-1,j})
+\end{equation}
+
+\begin{equation}
+u_{i,j+1}  = r(u_{i+1,j}-2u_{i,j}+u_{i-1,j}) + u_{i,j-1} -  u_{i,j}(u_{i+1,j} - u_{i-1,j})
+\end{equation}
+
+
+Sea el contorno $u(-0,5,t)=0,5$ y $u(0,5,t)=-0,5$ y las condiciones iniciales $u(x,0)=0$  $x \in (-0,5;0,5)$ 
+
+Supongamos adem\'as que la derivada es atrasado es igual a $0$ en $t=0$ con lo cual $u_{i,0-1} = u_{i,0}$
+
+Luego, el tiempo 1
+
+\begin{equation}
+u_{i,1}  = \frac{2v}{h}(u_{i+1,0}-2u_{i,0}+u_{i-1,0}) + u_{i,0} -  u_{i,0}(u_{i+1,0} - u_{i-1,0})
+\end{equation}
+
+\section{Parte 2}
+
+\subsection{Ejercicio 1. Placa de petri}
+
+Un placa petri tiene en el centro una concentraci\'on constante de $2g/l$ de una sustancia. La sustancia se transporte sobre un gel dispuesto en la placa, con una composic\'on diferente en cada mitad. En experimentos se observa que el avance de los frentes se describe mediante
+
+\begin{equation}
+f_{izq}(t)= 1.234 \ t^{0.5} \ \ y f_{der}(t) = 0.567 \ t^{0.5}
+\end{equation}
+
+Realizar simulaci\'on num\'erica utilizando la ecuasi\'on de difusi\'on.
+
+\begin{equation}
+\frac{\partial C}{\partial t} = \bigtriangledown \cdot (D(x,y)\bigtriangledown C ) \rightarrow \frac{\partial C}{\partial t} = \frac{\partial}{\partial t} (D(x,y)\frac{\partial C}{\partial x}) + \frac{\partial}{\partial y}(D\frac{\partial C}{\partial y})
+\end{equation}
+
+
+\end{document}
+
